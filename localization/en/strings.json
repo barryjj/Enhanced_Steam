@@ -50,6 +50,7 @@
     "badge_completion_cost": "Cost of completing badge",
     "loading": "Loading...",
     "selling": "Selling...",
+    "price_match": "Price match at __amount__",
     "quick_sell": "Quick Sell for __amount__",
     "instant_sell": "Instant Sell for __amount__",
     "starting_at": "Starting at",

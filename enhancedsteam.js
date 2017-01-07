@@ -5217,14 +5217,23 @@ function inventory_market_helper(response) {
 							$(thisItem).addClass("es-loading");
 
 							// Add the links with no data, so we can bind actions to them, we add the data later
+							$sideMarketActs.append("<a style='display:none' class='btn_small btn_green_white_innerfade es_market_btn' id='es_pricematch" + item + "'></a>");
 							$sideMarketActs.append("<a style='display:none' class='btn_small btn_green_white_innerfade es_market_btn' id='es_quicksell" + item + "'></a>");
 							$sideMarketActs.append("<a style='display:none' class='btn_small btn_green_white_innerfade es_market_btn' id='es_instantsell" + item + "'></a>");
 
 							// Check if price is stored in data
 							if ($(thisItem).hasClass("es-price-loaded")) {
 								var price_high = $(thisItem).data("price-high"),
-									price_low = $(thisItem).data("price-low");
+									price_low = $(thisItem).data("price-low"),
+									//price_match can be set to the value of price-high, since the idea is to just create a button to
+									//list the card/item at the same price as the other "lowest" value, which is the offset from the quicksell
+									//value in the options
+									price_match = $(thisItem).data("price-high");
 
+								// Add Price Match button on top of the other two
+								if (price_match) {
+									$("#es_pricematch" + item).attr("price", price_high).html("<span>" + localized_strings.price_match.replace("__amount__", formatCurrency(price_match, currency_number_to_type(wallet_currency))) + "</span>").show().before("<br class='es-btn-spacer'>");
+								}
 								// Add Quick Sell button
 								if (price_high) {
 									$("#es_quicksell" + item).attr("price", price_high).html("<span>" + localized_strings.quick_sell.replace("__amount__", formatCurrency(price_high, currency_number_to_type(wallet_currency))) + "</span>").show().before("<br class='es-btn-spacer'>");
@@ -5244,6 +5253,7 @@ function inventory_market_helper(response) {
 
 										get_http("//steamcommunity.com/market/itemordershistogram?language=english&currency=" + wallet_currency + "&item_nameid=" + market_id, function(market_txt) {
 											var market = JSON.parse(market_txt),
+												price_match = parseFloat(market.lowest_sell_order / 100)
 												price_high = parseFloat(market.lowest_sell_order / 100) + parseFloat(settings.quickinv_diff),
 												price_low = market.highest_buy_order / 100;
 
@@ -5261,6 +5271,10 @@ function inventory_market_helper(response) {
 											// Fixes multiple buttons
 											if ($(".item.activeInfo").is($(thisItem))) {
 												$(thisItem).addClass("es-price-loaded");
+												// Add "price match" button
+												if (price_match > price_high) {
+													$("#es_pricematch" + item).attr("price", price_match).html("<span>" + localized_strings.price_match.replace("__amount__", formatCurrency(price_match, currency_number_to_type(wallet_currency))) + "</span>").show().before("<br class='es-btn-spacer'>");
+												}
 												// Add "Quick Sell" button
 												if (price_high > price_low) {
 													$("#es_quicksell" + item).attr("price", price_high).html("<span>" + localized_strings.quick_sell.replace("__amount__", formatCurrency(price_high, currency_number_to_type(wallet_currency))) + "</span>").show().before("<br class='es-btn-spacer'>");
@@ -5278,13 +5292,13 @@ function inventory_market_helper(response) {
 							}
 						}
 
-						// Bind actions to "Quick Sell" and "Instant Sel" buttons
-						$("#es_quicksell" + item + ", #es_instantsell" + item).on("click", function(e){
+						// Bind actions to "Quick Sell" and "Instant Sell" buttons
+						$("#es_pricematch" + item + ", #es_quicksell" + item + ", #es_instantsell" + item).on("click", function(e){
 							e.preventDefault();
 
 							var sell_price = $(this).attr("price") * 100;
 
-							$("#es_sell, #es_quicksell" + item + ", #es_instantsell" + item).addClass("btn_disabled").css("pointer-events", "none");
+							$("#es_sell, #es_pricematch" + item + ", #es_quicksell" + item + ", #es_instantsell" + item).addClass("btn_disabled").css("pointer-events", "none");
 
 							$sideMarketActs.find("div").first().html("<div class='es_loading' style='min-height: 66px;'><img src='//steamcommunity-a.akamaihd.net/public/images/login/throbber.gif'><span>" + localized_strings.selling + "</div>");
 
